@@ -7,8 +7,45 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, class
 from sklearn.pipeline import make_pipeline
 import matplotlib.pyplot as plt
 
-# Carregar o dataset (substitua 'seu_dataset.csv' pelo arquivo baixado)
-df = pd.read_csv("diabetes_filtrado.csv")
+# Carregar o dataset
+df = pd.read_csv("Trabalho_1/diabetes_filtrado.csv")
+
+# ===== Menu interativo para escolher o tamanho do dataset =====
+print("=" * 60)
+print("SELEÇÃO DO TAMANHO DO DATASET")
+print("=" * 60)
+print(f"Dataset completo tem {len(df)} linhas")
+print("\nEscolha quantas linhas deseja usar:")
+print("1 - 10.000 linhas")
+print("2 - 30.000 linhas")
+print("3 - 50.000 linhas")
+print("4 - 70.000 linhas")
+print("5 - 100.000 linhas (completo)")
+print("=" * 60)
+
+while True:
+    escolha = input("Digite sua escolha (1-5): ").strip()
+    if escolha == "1":
+        n_samples = 10000
+        break
+    elif escolha == "2":
+        n_samples = 30000
+        break
+    elif escolha == "3":
+        n_samples = 50000
+        break
+    elif escolha == "4":
+        n_samples = 70000
+        break
+    elif escolha == "5":
+        n_samples = 100000
+        break
+    else:
+        print("Opção inválida! Digite um número entre 1 e 5.")
+
+# Shuffle e seleção das linhas
+df = df.sample(n=n_samples, random_state=42).reset_index(drop=True)
+print(f"\n✓ Dataset preparado com {n_samples} linhas (embaralhadas aleatoriamente)\n")
 
 # Inspecionar os dados
 print(df.head())
