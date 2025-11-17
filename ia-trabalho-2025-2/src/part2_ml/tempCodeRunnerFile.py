@@ -1,1 +1,0 @@
-pca = PCA(n_components=2)
