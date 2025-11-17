@@ -1,11 +1,13 @@
 import pandas as pd
 import numpy as np
+import time
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler  # <- correção do import
 from sklearn.model_selection import cross_val_score, train_test_split, StratifiedKFold
-from sklearn.metrics import accuracy_score, precision_score, recall_score, classification_report
+from sklearn.metrics import accuracy_score, precision_score, recall_score, classification_report, confusion_matrix, roc_auc_score, roc_curve
 from sklearn.pipeline import make_pipeline
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 # Carregar o dataset
 df = pd.read_csv("ia-trabalho-2025-2/data/processed/diabetes_filtrado.csv")
@@ -81,6 +83,11 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 
 # ===== Escolha do melhor k SEM olhar para o teste (evita vazamento) =====
+print("\n" + "=" * 60)
+print("BUSCA DO MELHOR K")
+print("=" * 60)
+start_time_cv = time.time()
+
 k_values = list(range(1, 31))
 scores = []
 
@@ -101,26 +108,66 @@ plt.xticks(k_values)
 plt.grid (True)
 plt.show()
 
+end_time_cv = time.time()
 best_k = k_values[int(np.argmax(scores))]
 print(f"Melhor k (CV no treino): {best_k}")
+print(f"Tempo de busca do melhor k: {end_time_cv - start_time_cv:.2f} segundos")
 
 # ===== Treino final no treino e avaliação no teste =====
 scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
+start_time_train = time.time()
 knn = KNeighborsClassifier(n_neighbors=best_k)
 knn.fit(X_train, y_train)
+end_time_train = time.time()
 
 # Predição e métricas
+start_time_pred = time.time()
 y_pred = knn.predict(X_test)
+y_pred_proba = knn.predict_proba(X_test)[:, 1]  # Probabilidades para ROC-AUC
+end_time_pred = time.time()
 
 accuracy = accuracy_score(y_test, y_pred)
 # 'macro' funciona bem para multi-classe; em binário pode usar average='binary'
 precision = precision_score(y_test, y_pred, average='macro', zero_division=0)
 recall = recall_score(y_test, y_pred, average='macro', zero_division=0)
+roc_auc = roc_auc_score(y_test, y_pred_proba)
 
-print(f"Acurácia:  {accuracy:.2f}")
-print(f"Precisão:  {precision:.2f} (macro)")
-print(f"Recall:    {recall:.2f} (macro)")
+print("\n" + "=" * 60)
+print("MÉTRICAS DE AVALIAÇÃO - KNN")
+print("=" * 60)
+print(f"Acurácia:  {accuracy:.4f}")
+print(f"Precisão:  {precision:.4f} (macro)")
+print(f"Recall:    {recall:.4f} (macro)")
+print(f"ROC-AUC:   {roc_auc:.4f}")
+print(f"\nTempo de treinamento: {end_time_train - start_time_train:.4f} segundos")
+print(f"Tempo de predição: {end_time_pred - start_time_pred:.4f} segundos")
+print(f"Tempo total (busca k + treino + predição): {(end_time_cv - start_time_cv) + (end_time_train - start_time_train) + (end_time_pred - start_time_pred):.2f} segundos")
 print("\nRelatório de Classificação:\n", classification_report(y_test, y_pred, zero_division=0))
+
+# Matriz de Confusão
+cm = confusion_matrix(y_test, y_pred)
+plt.figure(figsize=(8, 6))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=False)
+plt.title('Matriz de Confusão - KNN')
+plt.ylabel('Valor Real')
+plt.xlabel('Valor Predito')
+plt.tight_layout()
+plt.show()
+
+# Curva ROC
+fpr, tpr, thresholds = roc_curve(y_test, y_pred_proba)
+plt.figure(figsize=(8, 6))
+plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC curve (AUC = {roc_auc:.4f})')
+plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--', label='Random Classifier')
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('Taxa de Falsos Positivos')
+plt.ylabel('Taxa de Verdadeiros Positivos')
+plt.title('Curva ROC - KNN')
+plt.legend(loc="lower right")
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()
