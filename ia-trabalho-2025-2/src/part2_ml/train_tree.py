@@ -81,11 +81,6 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, stratify=y, random_state=42
 )
 
-# Padronizar os dados
-scaler = StandardScaler()
-X_train = scaler.fit_transform(X_train)
-X_test = scaler.transform(X_test)
-
 # ===== Treino e avaliação da Árvore de Decisão =====
 start_time_train = time.time()
 tree = DecisionTreeClassifier(random_state=42, max_depth=6)
