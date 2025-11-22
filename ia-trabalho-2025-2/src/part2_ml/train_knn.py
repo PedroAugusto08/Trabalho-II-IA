@@ -4,7 +4,7 @@ import time
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler  # <- correção do import
 from sklearn.model_selection import cross_val_score, train_test_split, StratifiedKFold
-from sklearn.metrics import accuracy_score, precision_score, recall_score, classification_report, confusion_matrix, roc_auc_score, roc_curve
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, classification_report, confusion_matrix, roc_auc_score, roc_curve
 from sklearn.pipeline import make_pipeline
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -130,17 +130,21 @@ y_pred_proba = knn.predict_proba(X_test)[:, 1]  # Probabilidades para ROC-AUC
 end_time_pred = time.time()
 
 accuracy = accuracy_score(y_test, y_pred)
+
 # 'macro' funciona bem para multi-classe; em binário pode usar average='binary'
 precision = precision_score(y_test, y_pred, average='macro', zero_division=0)
 recall = recall_score(y_test, y_pred, average='macro', zero_division=0)
+f1 = f1_score(y_test, y_pred, average='macro', zero_division=0)
 roc_auc = roc_auc_score(y_test, y_pred_proba)
 
 print("\n" + "=" * 60)
+
 print("MÉTRICAS DE AVALIAÇÃO - KNN")
 print("=" * 60)
 print(f"Acurácia:  {accuracy:.4f}")
 print(f"Precisão:  {precision:.4f} (macro)")
 print(f"Recall:    {recall:.4f} (macro)")
+print(f"F1-Score:  {f1:.4f} (macro)")
 print(f"ROC-AUC:   {roc_auc:.4f}")
 print(f"\nTempo de treinamento: {end_time_train - start_time_train:.4f} segundos")
 print(f"Tempo de predição: {end_time_pred - start_time_pred:.4f} segundos")
