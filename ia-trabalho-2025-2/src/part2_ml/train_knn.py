@@ -83,35 +83,39 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 
 # ===== Escolha do melhor k SEM olhar para o teste (evita vazamento) =====
+
 print("\n" + "=" * 60)
-print("BUSCA DO MELHOR K")
+print("BUSCA DO MELHOR K ÍMPAR")
 print("=" * 60)
 start_time_cv = time.time()
 
-k_values = list(range(1, 31))
+# Apenas valores ímpares de 1 a 29
+k_values = list(range(1, 30, 2))
 scores = []
 
 cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 for k in k_values:
-    # Escalonamento dentro do CV via pipeline (evita vazamento dentro das dobras)
-    pipe = make_pipeline(StandardScaler(), KNeighborsClassifier(n_neighbors=k, n_jobs=-1))  # n_jobs=-1 usa todos os cores
+    pipe = make_pipeline(StandardScaler(), KNeighborsClassifier(n_neighbors=k, n_jobs=-1))
     score = cross_val_score(pipe, X_train, y_train, cv=cv, n_jobs=-1).mean()
     scores.append(score)
 
-# Curva do cotovelo
+# Curva do cotovelo apenas para ímpares
 plt.figure(figsize=(10, 6))
 plt.plot(k_values, scores)
-plt.xlabel("K Values")
-plt.ylabel("Accuracy (CV)")
-plt.title("KNN Classifier Accuracy for Different K Values")
+plt.xlabel("Valores de K (ímpares)")
+plt.ylabel("Acurácia (CV)")
+plt.title("Precisão do classificador KNN para diferentes valores de K")
 plt.xticks(k_values)
-plt.grid (True)
+plt.grid(True)
+best_k = k_values[int(np.argmax(scores))]
+plt.axvline(x=best_k, color='red', linestyle='--', label=f'Escolhido k = {best_k}')
+plt.legend()
 plt.show()
 
 end_time_cv = time.time()
-best_k = k_values[int(np.argmax(scores))]
-print(f"Melhor k (CV no treino): {best_k}")
-print(f"Tempo de busca do melhor k: {end_time_cv - start_time_cv:.2f} segundos")
+
+print(f"Melhor K (CV no treino): {best_k}")
+print(f"Tempo de busca do melhor K: {end_time_cv - start_time_cv:.2f} segundos")
 
 # ===== Treino final no treino e avaliação no teste =====
 scaler = StandardScaler()
